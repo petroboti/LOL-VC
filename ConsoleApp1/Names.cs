@@ -21,9 +21,12 @@ namespace ConsoleApp1
             names = new List<PlayerChampionSelection>();
             var z = await api.SendAsync(HttpMethod.Get, "/lol-summoner/v1/current-summoner");
             var d = await api.SendAsync(HttpMethod.Get, "/lol-gameflow/v1/session");
-
-            PlayerAccount account = JsonConvert.DeserializeObject<PlayerAccount>(z);
-            Root root = JsonConvert.DeserializeObject<Root>(d);
+            if (d == null || z == null)
+            {
+                return (null, 0, null);
+            }
+            PlayerAccount? account = JsonConvert.DeserializeObject<PlayerAccount>(z);
+            Root? root = JsonConvert.DeserializeObject<Root>(d);
 
             if (account == null || root == null)
             {
@@ -60,17 +63,8 @@ namespace ConsoleApp1
             }// if player index is >5 then team 2, if less then team 1
             for (int i = (team == 1 ? 5 : 0); i < (team == 1 ? 10 : 5); i++)
             {
-                //Console.WriteLine(gameData.playerChampionSelections[i]);
                 names.Add(gameData.playerChampionSelections[i]);
             }
-            //Console.WriteLine(gameData.playerChampionSelections[0]);
-
-            // Access the extracted fields
-
-
-            // Output the values
-            //Console.WriteLine("Display Name: " + displayName);
-            //Console.WriteLine("Summoner ID: " + summonerId);
             return (names, gameData.gameId,team ==0? "Blue" : "Red");
         }
     }
