@@ -32,29 +32,28 @@ class gameData
 
 
 
-public class alma1
+public class Program
 {
-    private string region;
-    private string[] lobbyNames;
     public void Start()
     {
-        new Thread(async () => { await Main1(); })
+        new Thread(async () => { await Main(); })
         {
             IsBackground = true
         }.Start();
     }
     public async static Task Main(string[] args)
     {
-        alma1 alma = new alma1();
-        alma.Start();
+        Program program = new Program();
+        program.Start();
         while (true)
         {
             var input = Console.ReadKey(true);
         }
     }
-    public async Task Main1()
+    public async Task Main()
     {
-        Console.Title = "Lol VoiceChat";
+
+        Console.Title = "Hi :)";
         Console.ForegroundColor = ConsoleColor.White;
         var token = new CancellationTokenSource();
         var watcher = new LeagueClientWatcher();
@@ -66,72 +65,24 @@ public class alma1
             token.Cancel();
             var api1 = new LeagueApi(client.ClientAuthInfo.RiotClientAuthToken, client.ClientAuthInfo.RiotClientPort);
             var api2 = new LeagueApi(client.ClientAuthInfo.RemotingAuthToken, client.ClientAuthInfo.RemotingPort);
-            //onsole.WriteLine("Making sure you are logged in...");
-            Regions regions = new Regions();
-            region = await regions.GetRegion(api1);
-            //Console.WriteLine(region);                             CANT USE THIS :( FORBIDDEN API REQUEST
-            /*
-            GetParticipants getp = new GetParticipants();
-            lobbyNames = await getp.GetNames(api1);
 
-            if (lobbyNames.Length == 0)
-            {
-                Console.WriteLine("Api not working, or not in lobby");
-            }
-            else
-            {
-                //Console.WriteLine(names);
-                string msg = $"[{region}]";
-                msg += "\n";
-                msg += string.Join(",", lobbyNames);
-                myWebhook webhook = new myWebhook();
-                webhook.sendWebHook("https://discord.com/api/webhooks/1130122431856648202/4A_N8ZgaFji5X5mzwUmKil2AcSPxVETsLkWU9SPXyuST1Fb445eyxCUtGlt7GTXuB1H7", msg, "Captain Hook");
-                Console.Clear();
-                Console.WriteLine("Voice Channel Created");
-                Console.WriteLine("You can now close this window");
-            }
-            */
+            Regions regions = new Regions();
+            string region = await regions.GetRegion(api1);
+
             Names inGameNames = new Names(api2);
 
             var result = await inGameNames.GetNames();
             if (result == (null, 0,null))
             {
-                Console.WriteLine("Please run the program when you are loading in or in game");
+                Console.WriteLine("Please run the program when you are loading in or ingame");
                 Console.WriteLine("You can now close this window");
             }
             else
             {
-                var players = result.Item1;
-                var gamid = result.Item2;
-                string msg = $"[{region}]";
-                msg += ";";
-                msg += result.Item3;
-                msg += ";";
-                msg += gamid;
-                msg += ";";
-                foreach (var player in players)
-                {
-                    msg += player.summonerInternalName;
-                    if (!(players.IndexOf(player) == players.Count-1))
-                    {
-                        msg += ",";
-                    }
-                }
-                msg += ";";
-                foreach (var player in players)
-                {
-                    
-                    ChampionIds champion = (ChampionIds)Enum.Parse(typeof(ChampionIds), player.championId.ToString());
-
-                    
-                    msg += champion.ToString();
-                    if (!(players.IndexOf(player) == players.Count-1))
-                    {
-                        msg += ",";
-                    }
-                }
+                string msg = CreateMsg(result,region);
+                string address = File.ReadAllText("address.txt");
                 myWebhook webhook = new myWebhook();
-                webhook.sendWebHook("https://discord.com/api/webhooks/1130122431856648202/4A_N8ZgaFji5X5mzwUmKil2AcSPxVETsLkWU9SPXyuST1Fb445eyxCUtGlt7GTXuB1H7", msg, "Captain Hook");
+                webhook.sendWebHook(address, msg, "Captain Hook");
                 Console.Clear();
                 Console.WriteLine("Voice Channel Created");
                 Console.WriteLine("You can now close this window");
@@ -145,6 +96,40 @@ public class alma1
         await watcher.Observe(token.Token);
         await Task.Delay(-1);
     }
+
+    private string CreateMsg((List<PlayerChampionSelection>,long,string) result,string region)
+    {
+        var players = result.Item1;
+        var gamid = result.Item2;
+        string msg = $"[{region}]";
+        msg += ";";
+        msg += result.Item3;
+        msg += ";";
+        msg += gamid;
+        msg += ";";
+        foreach (var player in players)
+        {
+            msg += player.summonerInternalName;
+            if (!(players.IndexOf(player) == players.Count - 1))
+            {
+                msg += ",";
+            }
+        }
+        msg += ";";
+        foreach (var player in players)
+        {
+
+            ChampionIds champion = (ChampionIds)Enum.Parse(typeof(ChampionIds), player.championId.ToString());
+
+
+            msg += champion.ToString();
+            if (!(players.IndexOf(player) == players.Count - 1))
+            {
+                msg += ",";
+            }
+        }
+        return msg;
+    } 
     enum ChampionIds
     {
         Aatrox = 266,
